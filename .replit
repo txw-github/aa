@@ -16,15 +16,15 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "参数核查器测试"
+args = "参数核查器V2测试"
 
 [[workflows.workflow]]
-name = "参数核查器测试"
+name = "参数核查器V2测试"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python parameter_checker.py"
+args = "python parameter_checker_v2.py"
 
 [workflows.workflow.metadata]
 outputType = "console"
