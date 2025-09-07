@@ -63,7 +63,7 @@ class ParameterChecker:
                     logger.warning(f"未能加载漏配配置sheet '{missing_sheet}': {str(e)}")
 
             # 验证基础必要的列是否存在
-            base_required_columns = ['MO名称', '参数名称', '参数ID', '期望值', '参数含义', '条件表达式', '参数类型']
+            base_required_columns = ['MO名称', '参数名称', '参数ID', '期望值', '参数描述', '条件表达式', '参数类型']
             missing_base_columns = [col for col in base_required_columns if col not in main_df.columns]
 
             if missing_base_columns:
@@ -83,7 +83,7 @@ class ParameterChecker:
                     param_type = 'single'
 
                 # 对于多值参数，检查是否有"值描述"列
-                if param_type == 'multiple' and '值描述' not in df.columns:
+                if param_type == 'multiple' and '值描述' not in main_df.columns:
                     logger.error(f"多值参数 {mo_name}.{param_name} 缺少必要的'值描述'列")
                     continue
 
@@ -101,7 +101,7 @@ class ParameterChecker:
                     "parameter_id": param_group.iloc[0].get('参数ID', ''),
                     "parameter_name": param_name,
                     "parameter_type": param_type,
-                    "parameter_description": param_group.iloc[0].get('参数含义', ''),
+                    "parameter_description": param_group.iloc[0].get('参数描述', ''),
                     "check_items": [],  # 存储所有检查项（单值或开关）及对应条件
                     "switch_descriptions": {}  # 多值参数专用：{开关名称: 开关描述}
                 }
@@ -115,7 +115,6 @@ class ParameterChecker:
                     # 确保条件表达式转换为字符串后再处理
                     condition = row.get('条件表达式', '')
                     str_condition = str(condition).strip() if pd.notna(condition) else ''
-                    param_meaning = row.get('参数含义', '')
 
                     check_item = {
                         "condition": str_condition,
