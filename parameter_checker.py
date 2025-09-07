@@ -22,7 +22,7 @@ class ParameterChecker:
         self.load_parameter_knowledge(knowledge_file, knowledge_sheet)
 
     def load_parameter_knowledge(self, file_path="参数知识库.xlsx", main_sheet="空域配置",
-                                 missing_sheet="漏配") -> bool:
+                                 missing_sheet=None) -> bool:
         """从Excel文件中加载参数知识库，优化数值类型处理"""
         try:
             # 读取Excel文件时，将可能为整数的列指定为字符串先读取，避免自动转为浮点数
@@ -30,44 +30,41 @@ class ParameterChecker:
             main_df = pd.read_excel(
                 file_path,
                 sheet_name=main_sheet,
-                dtype=str,
-                converters={
-                    '期望值': str,
-                    '参数ID': str,
-                    'MO名称': str,
-                    '参数名称': str
-                }
-            )
-
-            # 读取漏配检查配置sheet
-            missing_df = pd.read_excel(
-                file_path,
-                sheet_name=missing_sheet,
                 dtype=str
             )
 
-            # 验证漏配sheet必要列
-            missing_required = ['MO名称', '检查字段', '检查值', '逻辑关系']
-            missing_missing = [col for col in missing_required if col not in missing_df.columns]
-            if missing_missing:
-                logger.error(f"漏配sheet缺少必要列: {missing_missing}")
-                return False
-
-            # 处理漏配检查配置
+            # 处理漏配检查配置sheet（可选）
             self.missing_configs = {}
-            for _, row in missing_df.iterrows():
-                mo_name = row['MO名称'].strip()
-                if mo_name not in self.missing_configs:
-                    self.missing_configs[mo_name] = []
-                self.missing_configs[mo_name].append({
-                    'field': row['检查字段'].strip(),
-                    'value': row['检查值'].strip(),
-                    'logic': row['逻辑关系'].strip().upper() if row.get('逻辑关系') else 'AND'
-                })
+            if missing_sheet:
+                try:
+                    missing_df = pd.read_excel(
+                        file_path,
+                        sheet_name=missing_sheet,
+                        dtype=str
+                    )
+
+                    # 验证漏配sheet必要列
+                    missing_required = ['MO名称', '检查字段', '检查值', '逻辑关系']
+                    missing_missing = [col for col in missing_required if col not in missing_df.columns]
+                    if missing_missing:
+                        logger.warning(f"漏配sheet缺少必要列: {missing_missing}")
+                    else:
+                        # 处理漏配检查配置
+                        for _, row in missing_df.iterrows():
+                            mo_name = row['MO名称'].strip()
+                            if mo_name not in self.missing_configs:
+                                self.missing_configs[mo_name] = []
+                            self.missing_configs[mo_name].append({
+                                'field': row['检查字段'].strip(),
+                                'value': row['检查值'].strip(),
+                                'logic': row['逻辑关系'].strip().upper() if row.get('逻辑关系') else 'AND'
+                            })
+                except Exception as e:
+                    logger.warning(f"未能加载漏配配置sheet '{missing_sheet}': {str(e)}")
 
             # 验证基础必要的列是否存在
             base_required_columns = ['MO名称', '参数名称', '参数ID', '期望值', '参数含义', '条件表达式', '参数类型']
-            missing_base_columns = [col for col in base_required_columns if col not in df.columns]
+            missing_base_columns = [col for col in base_required_columns if col not in main_df.columns]
 
             if missing_base_columns:
                 logger.error(f"Excel文件缺少必要的基础列: {missing_base_columns}")
@@ -1061,7 +1058,8 @@ if __name__ == "__main__":
     # 检查NRCELLFREQRELATION漏配和参数验证
     print("\n=== 测试NRCELLFREQRELATION核查 ===")
     nrcellfreq_errors = checker.check_nrcellfreqrelation(mo_datas, 'NRCELLFREQRELATION', 'TEST_SECTOR')
-    errors.extend(nrcellfreq_errors)
+    all_errors = []
+    all_errors.extend(nrcellfreq_errors)
 
     # 处理NRCELLFREQRELATION错误
     for error in nrcellfreq_errors:
