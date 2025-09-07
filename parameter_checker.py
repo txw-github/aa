@@ -6,17 +6,6 @@ from typing import Dict, List, Any, Optional, Set
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-import pandas as pd
-import logging
-from typing import Dict, List, Any, Optional, Set
-
-# 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-# 初始化错误列表
-errors = []
-
 
 class ParameterChecker:
     """
@@ -29,6 +18,7 @@ class ParameterChecker:
         """初始化参数核查器"""
         self.parameter_knowledge: Dict[str, Any] = {}
         self.missing_configs: Dict[str, List[Dict[str, str]]] = {}  # 漏配检查配置: {mo_name: [条件配置列表]}
+        self.errors: List[Dict[str, Any]] = []  # 初始化错误列表
         self.load_parameter_knowledge(knowledge_file, knowledge_sheet)
 
     def load_parameter_knowledge(self, file_path="参数知识库.xlsx", main_sheet="空域配置",
